@@ -1,0 +1,169 @@
+---
+title: "Zane_Alderfer_HW5"
+author: "Zane"
+date: "2023-11-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("tm")
+library(tm)
+library(stringr)
+#install.packages("wordcloud")
+library(wordcloud)
+library(stringi)
+library(Matrix)
+#install.packages("tidytext")
+library(tidytext) 
+library(dplyr)
+library(ggplot2)
+library(factoextra)
+library(rpart)
+#install.packages("rattle")
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+#install.packages("randomForest")
+library(randomForest)
+#install.packages("randomForestExplainer")
+library(randomForestExplainer)
+```
+```{r}
+#Load Fed Papers Corpus
+Fed_Papers = read.csv('/Users/zanealderfer/Downloads/fedPapers85.csv')
+view(Fed_Papers)
+## preprocess data: breakdown of authorship
+table(Fed_Papers[,1])
+```
+
+
+```{r}
+## creating a dataframe for each author
+Hamilton = Fed_Papers[Fed_Papers$author == "Hamilton",]
+Ham_Mad = Fed_Papers[Fed_Papers$author == "HM",]
+Jay = Fed_Papers[Fed_Papers$author == "Jay",]
+Madison = Fed_Papers[Fed_Papers$author == "Madison",]
+```
+```{r}
+#developing a function that finds the means of words for each author
+authorwordmean = function(x) {
+  y = ncol(x)
+  x = colMeans(x[,3:y])
+  newVec_1 = c()
+  for (i in 1:length(x)) {
+    newVec_1[i] = x[[i]]
+  }
+  print(newVec_1)
+}
+```
+```{r}
+#using the function on each author
+HamiltonVec = authorwordmean(Hamilton)
+Ham_Mad_Vec = authorwordmean(Ham_Mad)
+JayVec = authorwordmean(Jay)
+MadisonVec = authorwordmean(Madison)
+columns = colnames(Hamilton)
+```
+
+```{r}
+df_v2 = Hamilton
+view(df_v2)
+df_v2 = data.frame(rbind(HamiltonVec, Ham_Mad_Vec, JayVec, MadisonVec))
+view(df_v2)
+```
+```{r}
+colnames(df_v2) = columns[3:length(columns)]
+df_v2[,1:3]
+```
+```{r}
+wordVariance = sapply(df_v2, var)
+ordered = sort(wordVariance, decreasing = TRUE)
+plot(ordered)
+```
+```{r}
+#set the words applicable to the top 30% of words
+words = data.frame(ordered[1:(length(ordered) * 3/10)])
+length(rownames(words))
+```
+
+```{r}
+rownames(words)
+```
+
+```{r}
+#creating a df that contains the most frequently used words
+wordsdf <- Fed_Papers[,c("author", "filename", rownames(words))]
+rownames(wordsdf) = wordsdf$filename
+rownames(Fed_Papers) = Fed_Papers$filename
+```
+```{r}
+write.csv(wordsdf, "/Users/zanealderfer/Downloads/FEDwordsdf.csv")
+write.csv(Fed_Papers, "/Users/zanealderfer/Downloads/Fedwordsfull.csv")
+```
+```{r}
+tree_partial = read.csv("/Users/zanealderfer/Downloads/FEDwordsdf.csv")
+
+tree_partial = tree_partial[,-1]
+tree_partial = tree_partial[!grepl("Jay", tree_partial$author),]
+tree_partial = tree_partial[!grepl("HM", tree_partial$author),]
+tree_partial = droplevels(tree_partial)
+tree_partial = tree_partial[,-2]
+tree_partial = tree_partial[,c(2:ncol(tree_partial),1)]
+
+tree_partial_disputed = tree_partial[1:11,]
+tree_partial_full = tree_partial[-c(1:11),]
+view(tree_partial)
+```
+
+```{r}
+#
+indexes = sample(1:55, .55*length(1:55))
+indexes = c(indexes, sample(56:nrow(tree_partial_full), .55*length(56:nrow(tree_partial_full))))
+```
+
+```{r}
+tree_model1 = rpart(author ~ . , data = tree_partial_full[indexes,], 
+                    method = 'class',
+                    control = rpart.control(minbucket = 1, minsplit = 1, cp = -1),
+                    model = T)
+rsq.rpart(tree_model1)
+```
+```{r}
+rpart.plot(tree_model1)
+```
+```{r}
+pred_1 = predict(tree_model1, tree_partial_full[-indexes,], type = 'class')
+table(tree_partial_full$author[-indexes], pred_1)
+```
+
+```{r}
+tree_model3 = rpart(author ~ . , data = tree_partial_full[indexes,], method = 'class', model = T)
+rsq.rpart(tree_model3)
+```
+
+```{r}
+rpart.plot(tree_model3)
+```
+```{r}
+prediction_3 = predict(tree_model3, tree_partial_full[-indexes,], type = 'class')
+table(tree_partial_full$author[-indexes], prediction_3)
+```
+
+```{r}
+tree_model1 = rpart(author ~ . , data = tree_partial_full,
+                    method = 'class',
+                    control = rpart.control(minbucket = 1, minsplit = 1, cp = -1),
+                    model = T)
+tree_model3 = rpart(author ~ . , data = tree_partial_full, method = 'class', model = TRUE)
+predict(tree_model1, tree_partial_disputed, type = 'class')
+```
+```{r}
+predict(tree_model3, tree_partial_disputed, type = 'class')
+```
+```{r}
+
+
+
+```
+

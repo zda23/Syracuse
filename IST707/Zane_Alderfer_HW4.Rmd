@@ -1,0 +1,99 @@
+---
+title: "Zane_Alderfer_HW4"
+author: "Zane"
+date: "2023-11-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+FederalistPapers = read.csv("/Users/zanealderfer/Downloads/fedPapers85.csv", na.strings = c(""))
+sum(is.na(FederalistPapers))
+
+```
+
+```{r}
+FedPapers_kmean = FederalistPapers[,2:72]
+FedPapers_kmean = select(FedPapers_kmean, filename, also, may, every, some, his, shall, should, such, only, down)
+rownames(FedPapers_kmean) = FedPapers_kmean[,1]
+FedPapers_kmean[,1] = NULL
+FedPapers_HAC = FederalistPapers[,c(2:72)]
+FedPapers_HAC = select(FedPapers_HAC, filename, also, may, every, some, his, shall, should, such, only,down)
+rownames(FedPapers_HAC) = FedPapers_HAC[,1]
+FedPapers_HAC[,1] = NULL
+head(FedPapers_kmean)
+```
+```{r}
+library(NbClust)
+NbClust(FedPapers_HAC, method = "complete", index = "all")$Best.nc
+set.seed(20)
+```
+
+```{r}
+Clusters_2 = kmeans(FedPapers_kmean, 2)
+FedPapers_kmean$Clusters_2 = as.factor(Clusters_2$cluster)
+str(Clusters_2)
+Clusters_2$centers
+```
+```{r}
+Clusters_5 = kmeans(FedPapers_kmean, 5)
+FedPapers_kmean$Clusters_5 = as.factor(Clusters_5$cluster)
+str(Clusters_5)
+Clusters_5$centers
+```
+```{r}
+Clusters_15 = kmeans(FedPapers_kmean, 15)
+FedPapers_kmean$Clusters_15 = as.factor(Clusters_15$cluster)
+str(Clusters_15)
+Clusters_15$centers
+```
+
+```{r}
+library(cluster)
+library(cluster.datasets)
+library(ggvis)
+FedPapers_km2 = FederalistPapers
+FedPapers_km2$Clusters_2 = as.factor(Clusters_2$cluster)
+FedPapers_km5 = FederalistPapers
+FedPapers_km5$Clusters_5 = as.factor(Clusters_5$cluster)
+FedPapers_km15 = FederalistPapers
+FedPapers_km15$Clusters_15 = as.factor(Clusters_15$cluster)
+```
+```{r}
+clusplot(FedPapers_kmean, FedPapers_kmean$Clusters_2, color=TRUE, shade=TRUE, labels=0, lines=0)
+clusplot(FedPapers_kmean, FedPapers_kmean$Clusters_5, color=TRUE, shade=TRUE, labels=0, lines=0)
+clusplot(FedPapers_kmean, FedPapers_kmean$Clusters_15, color=TRUE, shade=TRUE, labels=0, lines=0)
+```
+```{r}
+library(ggplot2)
+ggplot(data = FedPapers_km2, aes(x=author, fill = Clusters_2)) + 
+  geom_bar(stat = "count") +
+  labs(title = "K = ?") +
+  theme(plot.title = element_text(hjust=0.5), text = element_text(size=15))
+ggplot(data = FedPapers_km5, aes(x=author, fill = Clusters_5)) + 
+  geom_bar(stat = "count") +
+  labs(title = "K = ?") +
+  theme(plot.title = element_text(hjust=0.5), text = element_text(size=15))
+ggplot(data = FedPapers_km15, aes(x=author, fill = Clusters_15)) + 
+  geom_bar(stat = "count") +
+  labs(title = "K = ?") +
+  theme(plot.title = element_text(hjust=0.5), text = element_text(size=15))
+```
+
+```{r}
+distance = dist(FedPapers_HAC, method = "euclidean")
+distance1 = dist(FedPapers_HAC, method = "canberra")
+distance2 = dist(FedPapers_HAC, method = "manhattan")
+```
+
+```{r}
+HAC_2 = hclust(distance, method = "complete")
+plot(HAC_2, cex = 0.6, hang = -1)
+rect.hclust(HAC_2, k = 2, border = 2:5)
+HAC_5 = hclust(distance1, method = "complete")
+plot(HAC_5, cex = 0.6, hang = -1)
+rect.hclust(HAC_5, k = 5, border = 2:5)
+HAC_15 = hclust(distance2, method = "complete")
+plot(HAC_15, cex = 0.6, hang = -1)
+rect.hclust(HAC_15, k = 15, border = 2:5)
+```
+
