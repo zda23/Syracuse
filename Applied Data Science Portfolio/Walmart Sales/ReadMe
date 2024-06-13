@@ -1,0 +1,6 @@
+The "Sales Risk Mitigation" presentation, prepared by Megan Zane, Nick, and Zane Alderfer, provides a comprehensive analysis of three years of weekly sales data for 45 stores to protect 
+profitability through data analytics. The pilot team evaluated the impact of temperature on sales and found no significant correlation between average yearly temperatures and store sales. 
+The analysis identified the highest and lowest performing departments in various weather conditions, highlighting that temperature did not significantly affect overall sales performance. 
+The team also explored the influence of CPI, unemployment, and fuel prices on weekly sales through multi-variable regression, concluding that these variables were significant but did not fully 
+explain the sales model. Recommendations for Phase 2 include integrating geographic data, extreme weather impacts, and marketing campaigns into the analysis, enhancing the dashboard for dynamic
+  multivariate analysis, and continuing to refine data transformations and modeling techniques.
