@@ -1,0 +1,7 @@
+The presentation on Fake News Detection, prepared by Zane Alderfer, James Burrows, Monica Fam, and Sandy Leung, explores the application of various machine learning and deep learning models to 
+identify and classify fake news. The study utilized two datasets of true and fake news articles, performing extensive preprocessing and exploratory data analysis (EDA) to prepare the data for modeling. 
+Sentiment analysis was conducted to understand the emotional manipulation in fake news. The team employed Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN), logistic regression, random 
+forest, and Support Vector Machines (SVM) to develop predictive models. Each model demonstrated high accuracy, with CNN achieving around 99.84% accuracy and RNN reaching approximately 92.46%. 
+The DistilBERT model, a smaller and faster variant of BERT, was also tested and showed strong performance but raised concerns about overfitting. The study concluded that while deep learning models 
+are effective in detecting fake news, they may be prone to overfitting and require careful computational resource management. Additionally, traditional machine learning models tended to classify a 
+high proportion of news as fake, indicating the need for further refinement and balance in prediction accuracy.
