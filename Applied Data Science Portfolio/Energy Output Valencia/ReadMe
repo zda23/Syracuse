@@ -1,0 +1,10 @@
+The final project for IST 707, completed by Zane Alderfer and Chris Snyder, focuses on applying machine learning algorithms to analyze relationships in extensive datasets, specifically in 
+the context of energy data. By using various supervised and unsupervised learning models, such as Decision Trees, Random Forests, Naive-Bayes, and k-Nearest Neighbors (kNN), the study aims 
+to uncover patterns and make predictions about energy consumption and generation. The data analyzed was sourced from Kaggle and included a comprehensive set of variables related to hourly 
+energy demand, generation, and weather over four years. Preprocessing steps were undertaken to handle missing values and to create subsets of data for analysis. The research process involved 
+examining energy outputs by time, constructing Decision Trees to identify key energy sources, applying Association Rules to understand weather impacts, and using Naive Bayes for predictive modeling. 
+The findings highlighted observable patterns, such as the correlation between forecasted and actual energy outputs and the influence of weather on energy generation. Despite the apparent relationship 
+between weather and energy output, the study found that predicting specific months based on this data was challenging. The project concluded that while there is a significant correlation between weather 
+and energy output, the combination of these factors with the month of the year was less impactful. The study suggests that extending the research to regions with more erratic weather and updating the 
+data to reflect the evolving energy landscape could provide further insights.
+  
