@@ -1,0 +1,185 @@
+---
+title: "FInal Project IST 707"
+author: "Zane"
+date: "2023-12-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+energy_weather_data = read.csv("/Users/zanealderfer/Downloads/combined_data.csv")
+library(plyr)
+library(dplyr)
+library(arules)
+library(readr)
+library(arulesViz)
+```
+```{r}
+colSums(is.na(energy_weather_data))
+df <- na.omit(energy_weather_data)
+energy_weather_data = df[-c(1,2,21,22,30,31,32,34,37)]
+View(energy_weather_data)
+#energy_weather_data = rename(energy_weather_data,time = time.x)
+energy_weather_data$ID <- seq.int(nrow(energy_weather_data))
+energy_weather_data <- energy_weather_data %>%
+  select(-ID) %>%
+  mutate_if(is.character, funs(as.factor)) %>%
+  mutate_if(is.numeric, funs(discretize))
+```
+```{r}
+rules = apriori(energy_weather_data, parameter = list(supp = 0.15, conf = 0.95, minlen = 4))#, appearance = list(defualt = "lhs", rhs = c("weather_main=clear", "weather_main=clouds")))
+rules = sort(rules, decreasing = TRUE, by = "lift")
+#inspect(rules[1:5])
+summary(rules)
+inspect(rules[11])
+inspect(rules[13])
+inspect(rules[18])
+inspect(rules[94])
+inspect(rules[128])
+```
+```{r}
+plot(rules, method = "grouped")
+plot(rules, measure=c("support", "lift"), shading = "confidence", engine = 'interactive', jitter = 0)
+```
+```{r}
+library(e1071)
+#install.packages("naivebayes")
+library(naivebayes)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+energy_weather_data_NB = read.csv("/Users/zanealderfer/Downloads/combined_data_NB.csv")
+#View(energy_weather_data_NB)
+colSums(is.na(energy_weather_data_NB))
+df <- na.omit(energy_weather_data_NB)
+colnames(energy_weather_data_NB)
+energy_weather_data_NB = df[-c(1,2,21,22,30,31,32,33,34,35,36,37)]
+#View(energy_weather_data_NB)
+#energy_weather_data_NB = rename(energy_weather_data_NB, time = time.x)
+energy_weather_data_NB$ID <- seq.int(nrow(energy_weather_data_NB))
+energy_weather_data_NB <- energy_weather_data_NB %>%
+  select(-ID) %>%
+  mutate_if(is.character, funs(as.factor))
+```
+```{r}
+train_data = slice(energy_weather_data_NB, seq(1, nrow(energy_weather_data_NB), 24))
+test_data = slice(energy_weather_data_NB, seq(2,nrow(energy_weather_data_NB), 24))
+train_data$time.x = as.factor(train_data$time.x)
+dim(train_data)
+head(train_data)
+summary(train_data)
+```
+```{r}
+library(FactoMineR)
+pca_digits = PCA(t(select(train_data,-time.x)))
+train_data =  data.frame(train_data$time.x,pca_digits$var$coord)  
+```
+
+```{r}
+percent <- .30
+set.seed(315)
+DigitSplit <- sample(nrow(train_data),nrow(train_data)*percent)
+DigitDF <- train_data[DigitSplit,]
+dim(DigitDF)
+(head(DigitDF))
+(str(DigitDF))
+(nrow(DigitDF))
+test_data$time.x<-as.factor(test_data$time.x)
+# Wont use test data, instead crossvalidation on train.
+dim(test_data)
+(head(test_data))
+```
+
+```{r}
+N <- nrow(DigitDF)
+## Number of desired splits
+kfolds <- 8
+## Generate indices of holdout observations
+holdout <- split(sample(1:N), 1:kfolds)
+head(holdout)
+```
+
+```{r}
+AllResults<-list()
+AllLabels<-list()
+for (k in 1:kfolds){
+  
+  DF_test_data <- DigitDF[holdout[[k]], ]
+  DF_train_data <- DigitDF[-holdout[[k]], ]
+  #view(DF_train_data)
+  ## View the created Test and Train sets
+  #(head(DigitDF_Train))
+  #(table(DigitDF_Test$DigitTotalDF.label))
+  ## Make sure you take the labels out of the testing data
+  #
+  test_data_nolabel<-DF_test_data[-c(1)]
+  test_data_justlabel<-DF_test_data$train_data.time.x
+  
+  #(head(DigitDF_Test_noLabel))
+  
+  #### Naive Bayes prediction ussing e1071 package
+  #Naive Bayes Train model
+  train_naibayes<-naiveBayes(train_data.time.x~., data=DF_train_data, na.action = na.pass)
+  #train_naibayes
+  #summary(train_naibayes)
+  
+  #Naive Bayes model Prediction 
+  nb_Pred <- predict(train_naibayes, test_data_nolabel)
+  #nb_Pred
+  
+  
+  #Testing accurancy of naive bayes model with Kaggle train data sub set
+  (confusionMatrix(nb_Pred, DF_test_data$train_data.time.x))
+  
+  # Accumulate results from each fold, if you like
+  AllResults<- c(AllResults, nb_Pred)
+  AllLabels<- c(AllLabels, test_data_justlabel)
+  
+  
+  ##Visualize
+  plot(nb_Pred, ylab = "Density", main = "Naive Bayes Prediction: Month by output", col = rainbow(12))
+  
+}
+```
+```{r}
+get_accuracy_rate <- function(results_table, total_cases) {
+    diagonal_sum <- sum(c(results_table[[1]], results_table[[12]], results_table[[23]], results_table[[34]],
+                        results_table[[45]], results_table[[56]], results_table[[67]], results_table[[78]],
+                        results_table[[89]], results_table[[100]]))
+  (diagonal_sum / total_cases)*100
+}
+```
+```{r}
+### end crossvalidation -- present results for all folds   
+(table(unlist(AllResults),unlist(AllLabels)))
+
+#########Testing with Kaggle sample######### 
+test_data_nolabel<-DF_test_data[-c(1)]
+(head(test_data_nolabel))
+
+nb_Pred <- predict(train_naibayes, test_data_nolabel)
+nb_Pred
+
+### Export naive Bayesbest result and run through Kaggle
+
+nbTestPred <- predict(train_naibayes,DF_test_data, type = 'class')
+nbTestPred <- data.frame(nbTestPred)
+colnames(nbTestPred)[1] <- 'time'
+nbTestPred$ImageId <- 1:nrow(nbTestPred)
+nbTestPred <- nbTestPred %>% select(ImageId, time)
+```
+
